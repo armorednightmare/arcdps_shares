@@ -14,19 +14,23 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Generate README
+      - name: Generate links
         run: |
           BASE_URL="https://armorednightmare.github.io/arcdps_shares"
-          echo "# arcdps_shares" > README.md
-          echo "" >> README.md
-          echo "## Available HTML Files" >> README.md
-          echo "" >> README.md
 
-          find . -maxdepth 1 -type f -name "*.html" | sort | while read file; do
+          LINKS=$(find . -maxdepth 1 -type f -name "*.html" | sort | while read file; do
             filename=$(basename "$file")
             url="$BASE_URL/$filename"
-            echo "- [$filename]($url)" >> README.md
-          done
+            echo "- [$filename]($url)"
+          done)
+
+          # Insert into README.md between the markers
+          awk -v links="$LINKS" '
+            BEGIN {printlist=0}
+            /<!-- AUTO-GENERATED-LIST:START -->/ {print; print links; printlist=1; next}
+            /<!-- AUTO-GENERATED-LIST:END -->/ {printlist=0}
+            !printlist {print}
+          ' README.md > README.tmp && mv README.tmp README.md
 
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v5
