@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write   # 👈 this is required for auto-commits
+  contents: write   # erlaubt dem Bot, Änderungen zurückzuschreiben
 
 jobs:
   update-readme:
@@ -21,12 +21,16 @@ jobs:
         run: |
           BASE_URL="https://armorednightmare.github.io/arcdps_shares"
 
-          LINKS=$(find . -maxdepth 1 -type f -name "*.html" | sort | while read file; do
-            filename=$(basename "$file")
-            url="$BASE_URL/$filename"
-            echo "- [$filename]($url)"
+          # finde alle HTML-Dateien rekursiv
+          LINKS=$(find . -type f -name "*.html" ! -path "./.git/*" | sort | while read -r file; do
+            # relativer Pfad ohne führendes ./
+            relpath="${file#./}"
+            # URL-kodierte Variante für den Link
+            encoded=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))" "$relpath")
+            echo "- [$relpath]($BASE_URL/$encoded)"
           done)
 
+          # Abschnitt im README ersetzen
           awk -v links="$LINKS" '
             BEGIN {printlist=0}
             /<!-- AUTO-GENERATED-LIST:START -->/ {print; print links; printlist=1; next}
