@@ -10,6 +10,7 @@ Just a repo to share hmtl files.
 - [20250722-215059_detailed_wvw_kill.html](https://armorednightmare.github.io/arcdps_shares/20250722-215059_detailed_wvw_kill.html)
 - [China[1].html](https://armorednightmare.github.io/arcdps_shares/China%5B1%5D.html)
 - [Dienstag Lag Fiesta.html](https://armorednightmare.github.io/arcdps_shares/Dienstag%20Lag%20Fiesta.html)
+- [Gegen_sV[1].html](https://armorednightmare.github.io/arcdps_shares/Gegen_sV%5B1%5D.html)
 - [Hier_oben_im_Nordwestosten[1].html](https://armorednightmare.github.io/arcdps_shares/Hier_oben_im_Nordwestosten%5B1%5D.html)
 - [Keine_Obis_Fights[1].html](https://armorednightmare.github.io/arcdps_shares/Keine_Obis_Fights%5B1%5D.html)
 - [Luki ist ein Zug.html](https://armorednightmare.github.io/arcdps_shares/Luki%20ist%20ein%20Zug.html)
