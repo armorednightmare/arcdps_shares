@@ -22,26 +22,28 @@ jobs:
       - name: Generate links (sorted by commit date, newest first)
         run: |
           BASE_URL="https://armorednightmare.github.io/arcdps_shares"
-
-          # Alle HTML-Dateien rekursiv sammeln und nach letztem Commit-Datum sortieren (neueste oben)
-          LINKS=$(
-            git ls-files '*.html' \
-            | while read -r file; do
-                date=$(git log -1 --format="%ct" -- "$file" || echo 0)
-                echo "$date|$file"
-              done \
-            | sort -nr  \   # <-- neu: absteigend sortieren
-            | while IFS="|" read -r date file; do
-                relpath="$file"
-                encoded=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))" "$relpath")
-                echo "- [$relpath]($BASE_URL/$encoded)"
-              done
-          )
-
-          # Abschnitt im README ersetzen
+      
+          # Temporäre Datei für sortierte Liste
+          TMPFILE=$(mktemp)
+      
+          # Alle HTML-Dateien nach Commit-Zeit sortieren (neueste oben)
+          git ls-files '*.html' | while read -r file; do
+            date=$(git log -1 --format="%ct" -- "$file" || echo 0)
+            echo "$date|$file"
+          done | sort -nr > "$TMPFILE"
+      
+          # Endgültige Links bauen
+          LINKS=""
+          while IFS="|" read -r date file; do
+            relpath="$file"
+            encoded=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))" "$relpath")
+            LINKS="$LINKS- [$relpath]($BASE_URL/$encoded)\n"
+          done < "$TMPFILE"
+      
+          # README aktualisieren
           awk -v links="$LINKS" '
             BEGIN {printlist=0}
-            /<!-- AUTO-GENERATED-LIST:START -->/ {print; print links; printlist=1; next}
+            /<!-- AUTO-GENERATED-LIST:START -->/ {print; printf links; printlist=1; next}
             /<!-- AUTO-GENERATED-LIST:END -->/ {printlist=0}
             !printlist {print}
           ' README.md > README.tmp && mv README.tmp README.md
