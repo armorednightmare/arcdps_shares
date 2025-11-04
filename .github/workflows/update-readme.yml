@@ -24,7 +24,7 @@ jobs:
           BASE_URL="https://armorednightmare.github.io/arcdps_shares"
 
           # 1. Alle .html-Dateien finden und den Git-Erstellungs-Timestamp abrufen
-          FILE_DATES=$(
+          FILE_DATA=$(
             git ls-files "*.html" -z | while IFS= read -r -d $'\0' file; do
             echo "$(git log -1 --pretty=format:'%at' -- "$file") $file"
             done | sort -r
