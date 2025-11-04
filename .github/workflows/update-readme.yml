@@ -27,27 +27,30 @@ jobs:
           START_PATTERN=''
           END_PATTERN=''
           
-          # --- DEBUG STEP: Check file discovery and link generation ---
+          # --- DEBUG STEP REMAINS (Temporarily for confirmation) ---
           echo "### Starting Link Generation Debug ###"
           echo "Files Found (if any) and Links Generated (Latest on top):"
-          
+
           # Use the link generation logic directly to print to the log
+          # NOTE: The perl command is corrected to properly encode characters like spaces, [, and ].
           DEBUG_OUTPUT=$(find . -type f -name "*.html" ! -path "./.git/*" -printf '%T@\t%p\n' | sort -r -n | cut -f 2- | while read -r file; do
             relpath="${file#./}"
-            encoded=$(printf "%s" "$relpath" | perl -pe 's/([^A-Za-z0-9_.-])/sprintf("%%%02X", ord($1))/g')
+            
+            # --- CORRECTED URL ENCODING ---
+            # Encodes special URL characters (e.g., space, [, ], etc.)
+            encoded=$(echo "$relpath" | perl -MURI::Escape -ne 'print uri_escape($_)')
+            # -----------------------------
+            
             echo "- [$relpath]($BASE_URL/$encoded)"
           done)
           
           echo "$DEBUG_OUTPUT"
           echo "### End Link Generation Debug ###"
           
-          # --- End Debug Step ---
-          
           # Now, assign the content to LINKS for the awk step
           LINKS="$DEBUG_OUTPUT"
 
           # --- CRITICAL: Clean README.md for exact string matching ---
-          # This removes invisible spaces/tabs on marker lines to prevent infinite growth.
           sed -i '/AUTO-GENERATED-LIST/s/^[ \t]*//g; /AUTO-GENERATED-LIST/s/[ \t]*$//g' README.md
 
           # Abschnitt im README ersetzen: Robustes AWK mit variablen Mustern
