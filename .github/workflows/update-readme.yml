@@ -28,6 +28,7 @@ jobs:
             git ls-files -z | while IFS= read -r -d $'\0' file; do
             echo "$(git log -1 --pretty=format:'%ad' --date=short -- "$file") $file"
             done | sort -r
+          )
 
           # 2. Links aus den sortierten Daten generieren
           LINKS=$(echo "$FILE_DATA" | while read -r datestr relpath; do
