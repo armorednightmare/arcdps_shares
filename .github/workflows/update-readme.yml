@@ -33,8 +33,8 @@ jobs:
           # Abschnitt im README ersetzen
           awk -v links="$LINKS" '
             BEGIN {printlist=0}
-            /<!-- AUTO-GENERATED-LIST:START -->/ {print; print links; printlist=1; next}
-            /<!-- AUTO-GENERATED-LIST:END -->/ {printlist=0}
+            // {print; print links; printlist=1; next}
+            // {printlist=0}
             !printlist {print}
           ' README.md > README.tmp && mv README.tmp README.md
 
