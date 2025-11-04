@@ -22,7 +22,7 @@ jobs:
           BASE_URL="https://armorednightmare.github.io/arcdps_shares"
 
           # finde alle HTML-Dateien rekursiv
-          LINKS=$(find . -type f -name "*.html" ! -path "./.git/*" | sort | while read -r file; do
+          LINKS=$(find . -type f -name "*.html" ! -path "./.git/*" -printf '%T@\t%p\n' | sort -r -n | cut -f 2- | while read -r file; do
             # relativer Pfad ohne führendes ./
             relpath="${file#./}"
             # URL-kodierte Variante für den Link
