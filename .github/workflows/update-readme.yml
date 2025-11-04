@@ -23,53 +23,25 @@ jobs:
         run: |
           BASE_URL="https://armorednightmare.github.io/arcdps_shares"
 
-          # Define the markers as shell variables
-          START_PATTERN=''
-          END_PATTERN=''
-          
-          # --- DEBUG STEP REMAINS (Temporarily for confirmation) ---
-          echo "### Starting Link Generation Debug ###"
-          echo "Files Found (if any) and Links Generated (Latest on top):"
-
-          # Use the link generation logic directly to print to the log
-          # NOTE: The perl command is corrected to properly encode characters like spaces, [, and ].
-          DEBUG_OUTPUT=$(find . -type f -name "*.html" ! -path "./.git/*" -printf '%T@\t%p\n' | sort -r -n | cut -f 2- | while read -r file; do
-            relpath="${file#./}"
+          # finde alle HTML-Dateien rekursiv und sortiere sie nach Änderungsdatum (neueste zuerst)
+          # %Y gibt den Änderungs-Timestamp aus, %n den Dateinamen
+          LINKS=$(find . -type f -name "*.html" ! -path "./.git/*" -printf '%T@ %p\n' | sort -r | while read -r time_and_file; do
+            # Den Zeitstempel und den Dateinamen trennen
+            relpath="${time_and_file#* }"
             
-            # --- CORRECTED URL ENCODING ---
-            # Encodes special URL characters (e.g., space, [, ], etc.)
-            encoded=$(echo "$relpath" | perl -MURI::Escape -ne 'print uri_escape($_)')
-            # -----------------------------
+            # relativer Pfad ohne führendes ./
+            relpath_clean="${relpath#./}"
             
-            echo "- [$relpath]($BASE_URL/$encoded)"
+            # URL-kodierte Variante für den Link
+            encoded=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))" "$relpath_clean")
+            echo "- [$relpath_clean]($BASE_URL/$encoded)"
           done)
-          
-          echo "$DEBUG_OUTPUT"
-          echo "### End Link Generation Debug ###"
-          
-          # Now, assign the content to LINKS for the awk step
-          LINKS="$DEBUG_OUTPUT"
 
-          # --- CRITICAL: Clean README.md for exact string matching ---
-          sed -i '/AUTO-GENERATED-LIST/s/^[ \t]*//g; /AUTO-GENERATED-LIST/s/[ \t]*$//g' README.md
-
-          # Abschnitt im README ersetzen: Robustes AWK mit variablen Mustern
-          awk -v links="$LINKS" \
-              -v start_pattern="$START_PATTERN" \
-              -v end_pattern="$END_PATTERN" \
-              '
+          # Abschnitt im README ersetzen
+          awk -v links="$LINKS" '
             BEGIN {printlist=0}
-            $0 == start_pattern {
-              print; 
-              print links; 
-              printlist=1; 
-              next
-            }
-            $0 == end_pattern {
-              printlist=0; 
-              print; 
-              next
-            }
+            /<!-- AUTO-GENERATED-LIST:START -->/ {print; print links; printlist=1; next}
+            /<!-- AUTO-GENERATED-LIST:END -->/ {printlist=0}
             !printlist {print}
           ' README.md > README.tmp && mv README.tmp README.md
 
