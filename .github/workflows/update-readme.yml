@@ -22,7 +22,7 @@ jobs:
           BASE_URL="https://armorednightmare.github.io/arcdps_shares"
 
           # finde alle HTML-Dateien rekursiv
-          LINKS=$(find . -type f -name "*.html" ! -path "./.git/*" -printf '%T@\t%p\n' | sort -r -n | cut -f 2- | while read -r file; do
+          LINKS=$(find . -type f -name "*.html" ! -path "./.git/*" | sort | while read -r file; do
             # relativer Pfad ohne führendes ./
             relpath="${file#./}"
             # URL-kodierte Variante für den Link
@@ -33,8 +33,8 @@ jobs:
           # Abschnitt im README ersetzen
           awk -v links="$LINKS" '
             BEGIN {printlist=0}
-            // {print; print links; printlist=1; next}
-            // {printlist=0}
+            /<!-- AUTO-GENERATED-LIST:START -->/ {print; print links; printlist=1; next}
+            /<!-- AUTO-GENERATED-LIST:END -->/ {printlist=0}
             !printlist {print}
           ' README.md > README.tmp && mv README.tmp README.md
 
