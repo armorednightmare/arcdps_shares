@@ -23,6 +23,10 @@ jobs:
         run: |
           BASE_URL="https://armorednightmare.github.io/arcdps_shares"
 
+          # Define the markers as shell variables
+          START_PATTERN='<!-- AUTO-GENERATED-LIST:START -->'
+          END_PATTERN='<!-- AUTO-GENERATED-LIST:END -->'
+          
           # finde alle HTML-Dateien rekursiv
           LINKS=$(find . -type f -name "*.html" ! -path "./.git/*" | sort | while read -r file; do
             # relativer Pfad ohne führendes ./
@@ -32,21 +36,24 @@ jobs:
             echo "- [$relpath]($BASE_URL/$encoded)"
           done)
 
-          # Abschnitt im README ersetzen: Robustes AWK zur Vermeidung von Duplikaten
-          awk -v links="$LINKS" '
+          # Abschnitt im README ersetzen: Robustes AWK mit variablen Mustern
+          awk -v links="$LINKS" \
+              -v start_pattern="$START_PATTERN" \
+              -v end_pattern="$END_PATTERN" \
+              '
             BEGIN {printlist=0}
-            // {
+            $0 == start_pattern { # Check if the current line ($0) exactly matches the start pattern
               print; 
               print links; 
               printlist=1; 
               next
             }
-            // {
+            $0 == end_pattern { # Check if the current line ($0) exactly matches the end pattern
               printlist=0; 
               print; 
               next
             }
-            !printlist {print} # Nur drucken, wenn wir außerhalb des Blocks sind
+            !printlist {print} # Only print lines outside the block
           ' README.md > README.tmp && mv README.tmp README.md
 
       - name: Commit and push changes
