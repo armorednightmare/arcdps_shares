@@ -23,25 +23,34 @@ jobs:
         run: |
           BASE_URL="https://armorednightmare.github.io/arcdps_shares"
 
-          # finde alle HTML-Dateien rekursiv und sortiere sie nach Änderungsdatum (neueste zuerst)
-          # %Y gibt den Änderungs-Timestamp aus, %n den Dateinamen
-          LINKS=$(find . -type f -name "*.html" ! -path "./.git/*" -printf '%T@ %p\n' | sort -r | while read -r time_and_file; do
-            # Den Zeitstempel und den Dateinamen trennen
-            relpath="${time_and_file#* }"
+          # 1. Alle .html-Dateien finden und den Git-Erstellungs-Timestamp abrufen
+          #    --format=%ct: Committer-Zeit als Unix-Timestamp
+          #    --diff-filter=A: Findet den Commit, in dem die Datei HINZUGEFÜGT (Added) wurde
+          #    | tail -1: Nimmt nur den ältesten (ersten) Eintrag
+          #    | sort -k1,1nr: Sortiert nach dem Timestamp (erste Spalte) in absteigender Reihenfolge (neueste zuerst)
+          FILE_DATA=$(find . -type f -name "*.html" ! -path "./.git/*" | while read -r file; do
+            # Entferne führendes ./ für den relativen Pfad
+            relpath="${file#./}"
             
-            # relativer Pfad ohne führendes ./
-            relpath_clean="${relpath#./}"
+            # Hole den Unix-Timestamp des ersten Commits der Datei
+            timestamp=$(git log --follow --format=%ct --diff-filter=A -- "$relpath" | tail -1)
             
+            # Ausgabe: Timestamp, gefolgt vom relativen Pfad
+            echo "$timestamp $relpath"
+          done | sort -k1,1nr)
+
+          # 2. Links aus den sortierten Daten generieren
+          LINKS=$(echo "$FILE_DATA" | while read -r timestamp relpath; do
             # URL-kodierte Variante für den Link
-            encoded=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))" "$relpath_clean")
-            echo "- [$relpath_clean]($BASE_URL/$encoded)"
+            encoded=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))" "$relpath")
+            echo "- [$relpath]($BASE_URL/$encoded)"
           done)
 
-          # Abschnitt im README ersetzen
+          # 3. Abschnitt im README ersetzen (Ihr AWK-Skript bleibt unverändert)
           awk -v links="$LINKS" '
             BEGIN {printlist=0}
-            /<!-- AUTO-GENERATED-LIST:START -->/ {print; print links; printlist=1; next}
-            /<!-- AUTO-GENERATED-LIST:END -->/ {printlist=0}
+            // {print; print links; printlist=1; next}
+            // {printlist=0}
             !printlist {print}
           ' README.md > README.tmp && mv README.tmp README.md
 
