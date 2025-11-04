@@ -36,7 +36,7 @@ jobs:
             if [ "$timestamp" -ne 0 ] && [ ! -z "$relpath" ]; then
               # URL-kodierte Variante für den Link
               encoded=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))" "$relpath")
-              date_str = strftime("%Y-%m-%d", timestamp)
+              date_str=$(date -d "@$timestamp" +%Y-%m-%d)
               echo "- $date_str [$relpath]($BASE_URL/$encoded)"
             fi
           done)
