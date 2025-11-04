@@ -25,7 +25,7 @@ jobs:
 
           # 1. Alle .html-Dateien finden und den Git-Erstellungs-Timestamp abrufen
           FILE_DATA=$(
-            git ls-files -z | while IFS= read -r -d $'\0' file; do
+            git ls-files "*.html" -z | while IFS= read -r -d $'\0' file; do
             echo "$(git log -1 --pretty=format:'%ad' --date=short -- "$file") $file"
             done | sort -r
           )
