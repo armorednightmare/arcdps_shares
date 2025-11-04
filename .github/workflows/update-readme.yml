@@ -33,7 +33,7 @@ jobs:
           # 2. Links aus den sortierten Daten generieren
           LINKS=$(echo "$FILE_DATA" | while read -r datestr relpath; do
             # Nur Dateien verarbeiten, die einen gültigen Timestamp haben
-            if [ "$datestr" -ne 0 ] && [ ! -z "$relpath" ]; then
+            if [ -n "$datestr" ] && [ ! -z "$relpath" ]; then
               # URL-kodierte Variante für den Link
               encoded=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))" "$relpath")
               echo "- $datestr [$relpath]($BASE_URL/$encoded)"
