@@ -25,19 +25,17 @@ jobs:
 
           # 1. Alle .html-Dateien finden und den Git-Erstellungs-Timestamp abrufen
           FILE_DATA=$(
-            git ls-files "*.html" -z | while IFS= read -r -d $'\0' file; do
-            echo "$(git log -1 --pretty=format:'%at' -- "$file") $file"
+            git ls-files -z | while IFS= read -r -d $'\0' file; do
+            echo "$(git log -1 --pretty=format:'%ad' --date=short -- "$file") $file"
             done | sort -r
-            )
 
           # 2. Links aus den sortierten Daten generieren
-          LINKS=$(echo "$FILE_DATA" | while read -r timestamp relpath; do
+          LINKS=$(echo "$FILE_DATA" | while read -r datestr relpath; do
             # Nur Dateien verarbeiten, die einen gültigen Timestamp haben
-            if [ "$timestamp" -ne 0 ] && [ ! -z "$relpath" ]; then
+            if [ "$datestr" -ne 0 ] && [ ! -z "$relpath" ]; then
               # URL-kodierte Variante für den Link
               encoded=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))" "$relpath")
-              date_str=$(date -d "@$timestamp" +%Y-%m-%d)
-              echo "- $date_str [$relpath]($BASE_URL/$encoded)"
+              echo "- $datestr [$relpath]($BASE_URL/$encoded)"
             fi
           done)
 
