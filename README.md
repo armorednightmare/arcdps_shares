@@ -4,6 +4,7 @@ Just a repo to share hmtl files.
 
 ## Available HTML Files
 <!-- AUTO-GENERATED-LIST:START -->
+- 2025-11-04 [GoP Gildenraid 20251104.html](https://armorednightmare.github.io/arcdps_shares/GoP%20Gildenraid%2020251104.html)
 - 2025-11-04 [DNGO_Allstars_20251103[1].html](https://armorednightmare.github.io/arcdps_shares/DNGO_Allstars_20251103%5B1%5D.html)
 - 2025-09-02 [Gegen_sV[1].html](https://armorednightmare.github.io/arcdps_shares/Gegen_sV%5B1%5D.html)
 - 2025-08-25 [Reset_gegen_vF[1].html](https://armorednightmare.github.io/arcdps_shares/Reset_gegen_vF%5B1%5D.html)
