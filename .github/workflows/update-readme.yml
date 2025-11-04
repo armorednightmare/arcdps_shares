@@ -27,18 +27,27 @@ jobs:
           START_PATTERN=''
           END_PATTERN=''
           
-          # --- 1. Restore Date Sorting ---
-          # Finde HTML-Dateien, sortiere nach Änderungszeit (neueste zuerst) und generiere Markdown-Links
-          LINKS=$(find . -type f -name "*.html" ! -path "./.git/*" -printf '%T@\t%p\n' | sort -r -n | cut -f 2- | while read -r file; do
+          # --- DEBUG STEP: Check file discovery and link generation ---
+          echo "### Starting Link Generation Debug ###"
+          echo "Files Found (if any) and Links Generated (Latest on top):"
+          
+          # Use the link generation logic directly to print to the log
+          DEBUG_OUTPUT=$(find . -type f -name "*.html" ! -path "./.git/*" -printf '%T@\t%p\n' | sort -r -n | cut -f 2- | while read -r file; do
             relpath="${file#./}"
-            # URL-kodierte Variante für den Link
             encoded=$(printf "%s" "$relpath" | perl -pe 's/([^A-Za-z0-9_.-])/sprintf("%%%02X", ord($1))/g')
             echo "- [$relpath]($BASE_URL/$encoded)"
           done)
+          
+          echo "$DEBUG_OUTPUT"
+          echo "### End Link Generation Debug ###"
+          
+          # --- End Debug Step ---
+          
+          # Now, assign the content to LINKS for the awk step
+          LINKS="$DEBUG_OUTPUT"
 
-          # --- 2. Clean README.md (CRITICAL for exact string matching) ---
-          # Use sed to remove leading/trailing whitespace from the marker lines in the README.
-          # This ensures that $0 == start_pattern works correctly.
+          # --- CRITICAL: Clean README.md for exact string matching ---
+          # This removes invisible spaces/tabs on marker lines to prevent infinite growth.
           sed -i '/AUTO-GENERATED-LIST/s/^[ \t]*//g; /AUTO-GENERATED-LIST/s/[ \t]*$//g' README.md
 
           # Abschnitt im README ersetzen: Robustes AWK mit variablen Mustern
@@ -47,18 +56,18 @@ jobs:
               -v end_pattern="$END_PATTERN" \
               '
             BEGIN {printlist=0}
-            $0 == start_pattern { # Check if the current line ($0) exactly matches the start pattern
+            $0 == start_pattern {
               print; 
               print links; 
               printlist=1; 
               next
             }
-            $0 == end_pattern { # Check if the current line ($0) exactly matches the end pattern
+            $0 == end_pattern {
               printlist=0; 
               print; 
               next
             }
-            !printlist {print} # Only print lines outside the block
+            !printlist {print}
           ' README.md > README.tmp && mv README.tmp README.md
 
       - name: Commit and push changes
