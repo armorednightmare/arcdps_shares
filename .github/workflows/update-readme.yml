@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write   # erlaubt dem Bot, Änderungen zurückzuschreiben
+  contents: write
 
 jobs:
   update-readme:
@@ -16,19 +16,27 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # wichtig, um commit-history für Datumsinfo zu haben
 
-      - name: Generate links
+           - name: Generate links (sorted by commit date, newest first)
         run: |
           BASE_URL="https://armorednightmare.github.io/arcdps_shares"
 
-          # finde alle HTML-Dateien rekursiv
-          LINKS=$(find . -type f -name "*.html" ! -path "./.git/*" | sort | while read -r file; do
-            # relativer Pfad ohne führendes ./
-            relpath="${file#./}"
-            # URL-kodierte Variante für den Link
-            encoded=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))" "$relpath")
-            echo "- [$relpath]($BASE_URL/$encoded)"
-          done)
+          # Alle HTML-Dateien rekursiv sammeln und nach letztem Commit-Datum sortieren (neueste oben)
+          LINKS=$(
+            git ls-files '*.html' \
+            | while read -r file; do
+                date=$(git log -1 --format="%ct" -- "$file" || echo 0)
+                echo "$date|$file"
+              done \
+            | sort -nr  \   # <-- neu: absteigend sortieren
+            | while IFS="|" read -r date file; do
+                relpath="$file"
+                encoded=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))" "$relpath")
+                echo "- [$relpath]($BASE_URL/$encoded)"
+              done
+          )
 
           # Abschnitt im README ersetzen
           awk -v links="$LINKS" '
@@ -38,7 +46,8 @@ jobs:
             !printlist {print}
           ' README.md > README.tmp && mv README.tmp README.md
 
+
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "Update README with HTML links"
+          commit_message: "Update README with HTML links (sorted chronologically)"
