@@ -24,22 +24,11 @@ jobs:
           BASE_URL="https://armorednightmare.github.io/arcdps_shares"
 
           # 1. Alle .html-Dateien finden und den Git-Erstellungs-Timestamp abrufen
-          #    --diff-filter=A: Zeigt nur Commits, in denen die Datei HINZUGEFÜGT (Added) wurde.
-          #    | tail -1: Nimmt den ältesten/ersten Commit, d.h. den Erstellungs-Commit.
-          #    | sort -k1,1nr: Sortiert nach dem Timestamp (neueste zuerst).
-          FILE_DATA=$(git ls-files "*.html" -z | xargs -0 -I{} sh -c '
-            relpath="$0"
-            # Hole den Unix-Timestamp des ersten Commits (der Erstellung) der Datei
-            timestamp=$(git log --follow --format="%at" --diff-filter=A -- "$relpath" | tail -1)
-            
-            # Wenn der Timestamp leer ist (z.B. bei nicht getrackten oder gelöschten Dateien, 
-            # sollte hier aber nicht passieren), setzen wir 0, damit sort nicht fehlschlägt.
-            if [ -z "$timestamp" ]; then
-              timestamp=0
-            fi
-            
-            echo "$timestamp $relpath"
-          ' {} | sort -k1,1nr)
+          FILE_DATES=$(
+            git ls-files "*.html" -z | while IFS= read -r -d $'\0' file; do
+            echo "$(git log -1 --pretty=format:'%at' -- "$file") $file"
+            done | sort -r
+            )
 
           # 2. Links aus den sortierten Daten generieren
           LINKS=$(echo "$FILE_DATA" | while read -r timestamp relpath; do
