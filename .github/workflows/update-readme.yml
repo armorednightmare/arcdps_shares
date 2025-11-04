@@ -25,9 +25,15 @@ jobs:
 
           # 1. Alle .html-Dateien finden und den Git-Erstellungs-Timestamp abrufen
           FILE_DATA=$(
-            git ls-files "*.html" -z | while IFS= read -r -d $'\0' file; do
-            echo "$(git log -1 --pretty=format:'%ad' --date=short -- "$file") $file"
-            done | sort -r
+           git ls-files "*.html" -z | while IFS= read -r -d $'\0' file; do
+          
+             datestr=$(git log --reverse --pretty=format:"%ad" --date=short --diff-filter=A -- "$file" | head -1)
+             # Fallback
+             if [ -z "$datestr" ]; then
+               datestr="0000-00-00"
+             fi
+             echo "$datestr $file"
+           done | sort -r # Sortiere nach Datum, neueste Datei oben
           )
 
           # 2. Links aus den sortierten Daten generieren
