@@ -1,9 +1,9 @@
 name: Update README with HTML links
 
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["pages-build-deployment"] # Triggered when this workflow finishes
+    types: [completed]
   workflow_dispatch:
 
 permissions:
@@ -12,6 +12,8 @@ permissions:
 jobs:
   update-readme:
     runs-on: ubuntu-latest
+    # Only run the job if the triggering workflow ("pages-build-deployment") was successful
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout repo
