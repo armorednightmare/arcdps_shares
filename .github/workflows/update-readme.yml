@@ -28,16 +28,25 @@ jobs:
             # relativer Pfad ohne führendes ./
             relpath="${file#./}"
             # URL-kodierte Variante für den Link
-            encoded=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))" "$relpath")
+            encoded=$(printf "%s" "$relpath" | perl -pe 's/([^A-Za-z0-9_.-])/sprintf("%%%02X", ord($1))/g')
             echo "- [$relpath]($BASE_URL/$encoded)"
           done)
 
-          # Abschnitt im README ersetzen
+          # Abschnitt im README ersetzen: Robustes AWK zur Vermeidung von Duplikaten
           awk -v links="$LINKS" '
             BEGIN {printlist=0}
-            /<!-- AUTO-GENERATED-LIST:START -->/ {print; print links; printlist=1; next}
-            /<!-- AUTO-GENERATED-LIST:END -->/ {printlist=0}
-            !printlist {print}
+            // {
+              print; 
+              print links; 
+              printlist=1; 
+              next
+            }
+            // {
+              printlist=0; 
+              print; 
+              next
+            }
+            !printlist {print} # Nur drucken, wenn wir außerhalb des Blocks sind
           ' README.md > README.tmp && mv README.tmp README.md
 
       - name: Commit and push changes
